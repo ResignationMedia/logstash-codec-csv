@@ -111,7 +111,22 @@ class LogStash::Codecs::CSV < LogStash::Codecs::Base
   end
 
   def encode(event)
-    csv_data = CSV.generate_line(event.to_hash.values, @options)
+    encode_options = @options
+    if @columns.any?
+      encode_options[:headers] = @columns
+      encode_options[:write_headers] = @include_headers 
+      encode_options[:return_headers] = @include_headers 
+    end
+
+    csv_data = CSV.generate(String.new, encode_options) do |csv_obj|
+      if @columns.any?
+        data = event.to_hash.select { |k, _| @columns.include? k }
+        data = data.sort_by { |k, _| @columns.index(k) }.to_h
+      else
+        data = event.to_hash
+      end
+      csv_obj << data.values
+    end
     @on_event.call(event, csv_data)
   end
 
