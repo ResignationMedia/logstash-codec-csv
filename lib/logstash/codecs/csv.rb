@@ -127,7 +127,7 @@ class LogStash::Codecs::CSV < LogStash::Codecs::Base
       end
       csv_obj << data.values
     end
-    @on_event.call(event, csv_data)
+    @on_event.call(event, csv_data.strip)
   end
 
   def reset
