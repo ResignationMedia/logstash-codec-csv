@@ -21,8 +21,54 @@ describe LogStash::Codecs::CSV do
         "column4" => "extra data",
       }
     }
-    let(:csv_string) { "big,bird,sesame street\n" }
+    let(:csv_string) { "big,bird,sesame street" }
     let(:columns) { ["column1", "column2", "column3"] }
+
+    context "with nested data and columns" do
+      let(:columns) { ["h.ele", "a.0", "b"] }
+      let(:config) do
+        {
+          "columns" => columns, 
+        }
+      end
+      let(:csv_data) do
+        {
+          "h" => { "ele" => 123 },
+          "a" => [ 1, 2 ],
+          "b" => "foo",
+        }
+      end
+      let(:csv_header_string) { "h.ele,a.0,b" }
+      let(:csv_string) { "123,1,foo" }
+      let(:csv_parse_options) do
+        {
+          :headers => columns, 
+          :return_headers => false,
+        }
+      end
+      let(:event) { LogStash::Event.new(csv_data) }
+
+      it "should return CSV encoded string" do
+        got_event = false
+        codec.on_event do |event, data|
+          expect(data).to eq(csv_string)
+          expect(CSV.parse(data, csv_parse_options).headers()).to eq(columns)
+          got_event = true
+        end
+        codec.encode(event)
+        expect(got_event).to eq(true)
+      end
+
+      it "should return CSV encoded string in column order" do
+        got_event = false
+        codec.on_event do |event, data|
+          expect(CSV.parse(data, csv_parse_options).headers()).to eq(columns)
+          got_event = true
+        end
+        codec.encode(event)
+        expect(got_event).to eq(true)
+      end
+    end
 
     context "with columns" do
       let(:config) { {"columns" => columns} }
