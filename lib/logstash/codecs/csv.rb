@@ -149,6 +149,11 @@ class LogStash::Codecs::CSV < LogStash::Codecs::Base
         data = event.to_hash.flatten_with_path
         data = data.select { |k, _| @columns.include? k }
         data = data.sort_by { |k, _| @columns.index(k) }.to_h
+        @columns.each do |col|
+          unless data.has_key? col
+            data[col] = ""
+          end
+        end
       else
         data = event.to_hash
       end
