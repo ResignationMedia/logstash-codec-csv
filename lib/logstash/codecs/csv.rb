@@ -93,7 +93,7 @@ class LogStash::Codecs::CSV < LogStash::Codecs::Base
 
     # validate conversion types to be the valid ones.
     @convert.each_pair do |column, type|
-      if !VALID_CONVERT_TYPES.include?(type)
+      unless VALID_CONVERT_TYPES.include?(type)
         raise LogStash::ConfigurationError, "#{type} is not a valid conversion type."
       end
     end
@@ -148,12 +148,13 @@ class LogStash::Codecs::CSV < LogStash::Codecs::Base
       if @columns.any?
         data = event.to_hash.flatten_with_path
         data = data.select { |k, _| @columns.include? k }
-        data = data.sort_by { |k, _| @columns.index(k) }.to_h
         @columns.each do |col|
           unless data.has_key? col
-            data[col] = ""
+            data[col] = nil
           end
         end
+
+        data = data.sort_by { |k, _| @columns.index(k) }.to_h
       else
         data = event.to_hash
       end
